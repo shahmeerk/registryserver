@@ -1,16 +1,30 @@
 pipeline {
     agent any
-    tools {
-        maven 'M3'
+
+    environment {
+        APP_NAME = 'registry-server' // Replace with your application name
+        IMAGE_TAG = 'latest' // or you can use a dynamic tag, for example, using ${env.BUILD_ID}
+        DOCKER_HUB_REPO = 'sk4k/registry-container' // Replace with your Docker Hub username and repository name
     }
+
     stages {
         stage('Checkout') {
             steps {
-                git credentialsId: 'github-credentials', url: 'https://github.com/shahmeerk/s-registryserver.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']], // Replace with your branch name
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/shahmeerk/s-registryserver.git', // Replace with your GitHub repository URL
+                        credentialsId: 'github-credentials' // Replace with your GitHub credentials ID stored in Jenkins
+                    ]]
+                ])
             }
         }
 
-        stage('Build') {
+        stage('Build with Maven') {
             steps {
                 sh 'mvn clean install'
             }
@@ -19,18 +33,19 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        def app = docker.build("sk4k/registry-container")
-                    }
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        docker.image("sk4k/registry-container").push("latest")
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'Lousy--97', usernameVariable: 'sk4k')]) {
+                        sh '''
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                        docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}
+                        '''
                     }
                 }
             }
