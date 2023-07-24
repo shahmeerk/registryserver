@@ -1,6 +1,9 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'M3'
+    }
     environment {
         APP_NAME = 'registry-server' // Replace with your application name
         IMAGE_TAG = 'latest' // or you can use a dynamic tag, for example, using ${env.BUILD_ID}
@@ -9,19 +12,9 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']], // Replace with your branch name
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [],
-                    submoduleCfg: [],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/shahmeerk/s-registryserver.git', // Replace with your GitHub repository URL
-                        credentialsId: 'github-credentials' // Replace with your GitHub credentials ID stored in Jenkins
-                    ]]
-                ])
-            }
+                steps {
+                    git credentialsId: 'github-credentials', url: 'https://github.com/shahmeerk/s-registryserver.git'
+             }
         }
 
         stage('Build with Maven') {
