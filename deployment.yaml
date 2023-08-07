@@ -16,7 +16,7 @@ spec:
         - name: registry-container
           image: sk4k/registry-container:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 8761
           resources:
             limits:
               cpu: "1"
@@ -34,6 +34,6 @@ spec:
   type: LoadBalancer
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 8761
   selector:
     app: my-app
