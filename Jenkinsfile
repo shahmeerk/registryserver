@@ -45,8 +45,6 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"'
-                sh 'chmod +x kubectl'
-                sh 'sudo mv kubectl /usr/local/bin/'
                 withCredentials([file(credentialsId: 'kubeconfigId', variable: 'KUBECONFIG')]) {
                     sh 'export KUBECONFIG=$KUBECONFIG'
                     sh 'kubectl config use-context sk-k8-cluster'
