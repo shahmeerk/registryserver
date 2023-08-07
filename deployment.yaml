@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sk-app-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sk-app
+  template:
+    metadata:
+      labels:
+        app: sk-app
+    spec:
+      containers:
+        - name: registry-container
+          image: sk4k/registry-container:latest
+          ports:
+            - containerPort: 8080

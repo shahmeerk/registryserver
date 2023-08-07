@@ -5,16 +5,17 @@ pipeline {
         maven 'M3'
     }
     environment {
-        APP_NAME = 'registry-server' // Replace with your application name
-        IMAGE_TAG = 'latest' // or you can use a dynamic tag, for example, using ${env.BUILD_ID}
-        DOCKER_HUB_REPO = 'sk4k/registry-container' // Replace with your Docker Hub username and repository name
+        APP_NAME = 'registry-server'
+        IMAGE_TAG = 'latest'
+        DOCKER_HUB_REPO = 'sk4k/registry-container'
+        KUBECONFIG_FILE = 'kubeconfig'
+        DEPLOYMENT_FILE = 'deployment.yaml'
     }
-
     stages {
         stage('Checkout') {
-                steps {
-                    git credentialsId: 'github-credentials', url: 'https://github.com/shahmeerk/s-registryserver.git'
-             }
+            steps {
+                git credentialsId: 'github-credentials', url: 'https://github.com/shahmeerk/s-registryserver.git'
+            }
         }
 
         stage('Build with Maven') {
@@ -35,9 +36,21 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                       sh(script: "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin", returnStdout: true).trim()
-                       sh "docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
+                        sh(script: "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin", returnStdout: true).trim()
+                        sh "docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
                     }
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"'
+                sh 'chmod +x kubectl'
+                sh 'sudo mv kubectl /usr/local/bin/'
+                withCredentials([file(credentialsId: 'kubeconfigId', variable: 'KUBECONFIG')]) {
+                    sh 'export KUBECONFIG=$KUBECONFIG'
+                    sh 'kubectl config use-context sk-k8-cluster'
+                    sh 'kubectl apply -f $DEPLOYMENT_FILE'
                 }
             }
         }
