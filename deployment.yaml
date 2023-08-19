@@ -34,6 +34,6 @@ spec:
   type: LoadBalancer
   ports:
     - port: 80
-      targetPort: 8761
+      targetPort: 8761  # Updated to match the containerPort in the Deployment
   selector:
-    app: my-app
+    app: sk-app
