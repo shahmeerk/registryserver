@@ -11,6 +11,4 @@ public class RegistryServerApplication {
     public static void main(String[] args) {
         SpringApplication.run(RegistryServerApplication.class, args);
     }
-    //TEST
-
 }
