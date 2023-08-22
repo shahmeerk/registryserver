@@ -52,6 +52,7 @@ pipeline {
                     sh 'export KUBECONFIG=$KUBECONFIG'
                     sh 'kubectl config use-context sk-k8-cluster'
                     sh 'kubectl apply -f $DEPLOYMENT_FILE'
+                    sh 'kubectl rollout restart deployment sk-app-deployment'
                 }
             }
         }
