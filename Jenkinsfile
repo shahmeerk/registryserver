@@ -4,9 +4,6 @@ pipeline {
     tools {
         maven 'M3'
     }
-    triggers {
-        pollSCM('H/5 * * * *') // Polls every 5 minutes
-    }
     environment {
         APP_NAME = 'registry-server'
         IMAGE_TAG = 'latest'
