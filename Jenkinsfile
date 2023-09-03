@@ -24,6 +24,31 @@ pipeline {
             }
         }
 
+        stage('Run Automated Tests') {
+                    steps {
+                        sh 'mvn test'
+                    }
+
+        stage('SonarQube Scanning') {
+                    steps {
+                        script {
+                            withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                                sh(script: "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin", returnStdout: true).trim()
+                                sh "docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
+                            }
+                        }
+                    }
+                }
+                stage('Checkmarx Scanning') {
+                            steps {
+                                script {
+                                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                                        sh(script: "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin", returnStdout: true).trim()
+                                        sh "docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
+                                    }
+                                }
+                            }
+                        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -31,7 +56,6 @@ pipeline {
                 }
             }
         }
-
         stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
@@ -42,6 +66,22 @@ pipeline {
                 }
             }
         }
+        stage('Terraform Initialistion') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage('Terraform Validate and Execution Plan') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        stage('Terraform Apply') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"'
