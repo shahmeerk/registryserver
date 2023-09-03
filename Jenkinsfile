@@ -40,9 +40,9 @@ pipeline {
                 stage('Checkmarx Scanning') {
                     steps {
                         // Assumes Checkmarx Jenkins plugin is installed
-                        checkmarx credentialsId: 'checkmarx-credentials', projectName: 'YourProjectName'
-                    }
+                        checkmarx credentialsId: 'checkmarx-credentials', projectName: 'registryserver'
                 }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
