@@ -31,24 +31,18 @@ pipeline {
         }
         stage('SonarQube Scanning') {
                     steps {
-                        script {
-                            withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                                sh(script: "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin", returnStdout: true).trim()
-                                sh "docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
-                            }
+                        withSonarQubeEnv('SonarQubeServer') {
+                            sh 'mvn sonar:sonar'
                         }
                     }
                 }
+
                 stage('Checkmarx Scanning') {
-                            steps {
-                                script {
-                                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                                        sh(script: "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin", returnStdout: true).trim()
-                                        sh "docker push ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
-                                    }
-                                }
-                            }
-                        }
+                    steps {
+                        // Assumes Checkmarx Jenkins plugin is installed
+                        checkmarx credentialsId: 'checkmarx-credentials', projectName: 'YourProjectName'
+                    }
+                }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -66,21 +60,24 @@ pipeline {
                 }
             }
         }
-        stage('Terraform Initialistion') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-        stage('Terraform Validate and Execution Plan') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-        stage('Terraform Apply') {
-            steps {
-                sh 'mvn test'
-            }
-        }
+        stage('Terraform Initialization') {
+                    steps {
+                        sh 'terraform init -backend-config=backend-config.tfvars'
+                    }
+                }
+
+                stage('Terraform Validate and Plan') {
+                    steps {
+                        sh 'terraform validate'
+                        sh 'terraform plan -out=tfplan'
+                    }
+                }
+
+                stage('Terraform Apply') {
+                    steps {
+                        sh 'terraform apply -auto-approve -input=false tfplan'
+                    }
+                }
 
         stage('Deploy to Kubernetes') {
             steps {
